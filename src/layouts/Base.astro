@@ -1,0 +1,99 @@
+---
+import '../styles/global.css';
+import { en } from '../i18n';
+
+interface Props {
+  title: string;
+  description: string;
+  titleEn?: string;
+  descriptionEn?: string;
+  home?: boolean;
+}
+const { title, description, titleEn, descriptionEn, home = false } = Astro.props;
+// 首页用锚点，其他页面回到首页对应区块
+const base = home ? '' : '/';
+---
+<!doctype html>
+<html lang="zh-CN" data-home={home ? '' : undefined}>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title {...en(titleEn)}>{title}</title>
+  <meta name="description" content={description} {...en(null, { content: descriptionEn })}>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;600&family=Playfair+Display:ital,wght@1,500&display=swap">
+  <script is:inline>
+    (function () {
+      var root = document.documentElement;
+      // 上次选过英文就先把语言标记换掉，正文在 body 末尾的脚本里替换
+      try { if (localStorage.getItem('lang') === 'en') root.lang = 'en'; } catch (e) {}
+      // 首页有脚本且允许动效时先隐藏首屏文字，等开场动画接管；3 秒兜底避免内容一直不可见
+      if (root.hasAttribute('data-home') && matchMedia('(prefers-reduced-motion: no-preference)').matches) {
+        root.classList.add('is-loading');
+        setTimeout(function () { root.classList.remove('is-loading'); }, 3000);
+      }
+    })();
+  </script>
+</head>
+<body>
+  <a class="skip" href="#main" {...en('Skip to content')}>跳到正文</a>
+
+  <header class="header">
+    <nav class="header__inner frame t-small" aria-label="主导航" {...en(null, { 'aria-label': 'Main' })}>
+      <div class="header__side">
+        <a class="header__link nav-link" href={`${base}#resume`} {...en('Resume')}>简历</a>
+        <span class="header__link header__link--fill"><a class="nav-link" href={`${base}#projects`} {...en('Projects')}>项目</a></span>
+      </div>
+      <a class="header__logo" href={home ? '#top' : '/'} aria-label="ice，回到首页" {...en(null, { 'aria-label': 'ice, back to home' })}>ice</a>
+      <div class="header__side">
+        <span class="header__link header__link--fill"><a class="nav-link" href={`${base}#thoughts`} {...en('Thoughts')}>思考</a></span>
+        <a class="header__link header__link--end nav-link" href={`${base}#contact`} {...en('Contact')}>联系</a>
+        <button class="lang-toggle" type="button" aria-label="Switch to English" {...en(null, { 'aria-label': '切换到中文' })}>
+          <span class="lang-toggle__opt" lang="zh-CN">中</span>
+          <span aria-hidden="true">/</span>
+          <span class="lang-toggle__opt" lang="en">EN</span>
+        </button>
+      </div>
+    </nav>
+  </header>
+
+  <main id="main">
+    <slot />
+  </main>
+
+  {!home && (
+    <footer class="page-footer t-small">
+      <a class="nav-link" href="/" {...en('Back to home')}>回到首页</a>
+      <span>© {new Date().getFullYear()} ice</span>
+    </footer>
+  )}
+
+  <script is:inline>
+    // 中英切换：第一次切换时把中文原文存进 data-zh-*，之后两种语言来回换
+    (function () {
+      var root = document.documentElement;
+      function apply(lang) {
+        var toEn = lang === 'en';
+        document.querySelectorAll('[data-i18n]').forEach(function (el) {
+          Array.prototype.slice.call(el.attributes).forEach(function (a) {
+            if (a.name.indexOf('data-en') !== 0) return;
+            var target = a.name === 'data-en' ? null : a.name.slice(8);
+            var keep = 'data-zh' + (target ? '-' + target : '');
+            if (!el.hasAttribute(keep)) el.setAttribute(keep, target ? el.getAttribute(target) || '' : el.textContent);
+            var value = toEn ? a.value : el.getAttribute(keep);
+            if (target) el.setAttribute(target, value); else el.textContent = value;
+          });
+        });
+        root.lang = toEn ? 'en' : 'zh-CN';
+        try { localStorage.setItem('lang', lang); } catch (e) {}
+        document.dispatchEvent(new CustomEvent('langchange', { detail: lang }));
+      }
+      if (root.lang === 'en') apply('en');
+      document.querySelector('.lang-toggle').addEventListener('click', function () {
+        apply(root.lang === 'en' ? 'zh' : 'en');
+      });
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,19 @@
+---
+// 联系方式图标：品牌图标来自 simple-icons（CC0），邮箱为自绘信封
+import { siGithub, siQq, siX } from 'simple-icons';
+
+export type IconName = 'mail' | 'github' | 'qq' | 'x';
+interface Props { name: IconName; class?: string }
+const { name, class: className } = Astro.props;
+const brand = { github: siGithub, qq: siQq, x: siX } as const;
+---
+{name === 'mail' ? (
+  <svg class:list={['icon', className]} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <rect x="2.5" y="4.5" width="19" height="15" rx="2" />
+    <path d="m3 6 9 7 9-7" />
+  </svg>
+) : (
+  <svg class:list={['icon', className]} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+    <path d={brand[name].path} />
+  </svg>
+)}

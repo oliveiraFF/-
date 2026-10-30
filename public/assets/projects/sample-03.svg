@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1000" width="1600" height="1000">
+  <defs>
+    <radialGradient id="g" cx="0.35" cy="0.45" r="0.75">
+      <stop offset="0" stop-color="#173330"/><stop offset="1" stop-color="#0b0b0a"/>
+    </radialGradient>
+    <pattern id="n" width="4" height="4" patternUnits="userSpaceOnUse"><rect width="1" height="1" fill="#fff" opacity=".05"/></pattern>
+  </defs>
+  <rect width="1600" height="1000" fill="url(#g)"/>
+  <rect width="1600" height="1000" fill="url(#n)"/>
+  <g transform="translate(170 150) rotate(-2)">
+    <rect width="980" height="640" rx="18" fill="#1c1b19" stroke="#3a3833" stroke-width="2"/>
+    <rect width="980" height="56" rx="18" fill="#24231f"/>
+    <circle cx="36" cy="28" r="8" fill="#6fb7a8"/><circle cx="64" cy="28" r="8" fill="#4a4741"/><circle cx="92" cy="28" r="8" fill="#4a4741"/>
+    <rect x="80" y="96" width="250" height="510" rx="34" fill="#24231f" stroke="#3a3833" stroke-width="2"/>
+    <circle cx="205" cy="210" r="62" fill="#6fb7a8"/>
+    <rect x="120" y="300" width="170" height="16" rx="8" fill="#f5eacf"/>
+    <rect x="140" y="332" width="130" height="12" rx="6" fill="#f5eacf" opacity=".4"/>
+    <rect x="110" y="380" width="190" height="52" rx="16" fill="#1c1b19"/>
+    <rect x="110" y="446" width="190" height="52" rx="16" fill="#1c1b19"/>
+    <rect x="110" y="526" width="190" height="46" rx="23" fill="#6fb7a8"/>
+    <rect x="390" y="96" width="250" height="510" rx="34" fill="#24231f" stroke="#3a3833" stroke-width="2"/>
+    <rect x="420" y="136" width="190" height="150" rx="18" fill="#3a3833"/>
+    <rect x="420" y="306" width="150" height="16" rx="8" fill="#f5eacf"/>
+    <rect x="420" y="338" width="190" height="12" rx="6" fill="#f5eacf" opacity=".35"/>
+    <rect x="420" y="400" width="88" height="88" rx="14" fill="#6fb7a8" opacity=".8"/>
+    <rect x="522" y="400" width="88" height="88" rx="14" fill="#3a3833"/>
+    <rect x="700" y="96" width="240" height="510" rx="34" fill="#24231f" stroke="#3a3833" stroke-width="2"/>
+    <rect x="730" y="140" width="180" height="14" rx="7" fill="#f5eacf" opacity=".7"/>
+    <rect x="730" y="180" width="180" height="60" rx="14" fill="#1c1b19"/>
+    <rect x="730" y="256" width="180" height="60" rx="14" fill="#1c1b19"/>
+    <rect x="730" y="332" width="180" height="60" rx="14" fill="#6fb7a8" opacity=".85"/>
+  </g>
+</svg>

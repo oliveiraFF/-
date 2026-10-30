@@ -1,0 +1,341 @@
+---
+import { getCollection } from 'astro:content';
+import Base from '../layouts/Base.astro';
+import Icon, { type IconName } from '../components/Icon.astro';
+import { site } from '../data/site';
+import { en } from '../i18n';
+
+const projects = (await getCollection('projects')).sort((a, b) => a.data.order - b.data.order);
+const thoughts = (await getCollection('thoughts', ({ data }) => !data.draft))
+  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf())
+  .slice(0, 3);
+
+// 各区块用到的图片：项目不足三个时回退到第一张
+const cover = (i: number) => (projects[i] ?? projects[0])?.data.cover;
+const hasSample = projects.some((p) => p.data.sample);
+// 开场第三屏两张图：自定义图优先，否则用项目封面
+const statementImg = (i: 0 | 1) => {
+  const own = site.statementImages[i];
+  const p = projects[i + 1] ?? projects[0];
+  return own ? { ...own, sample: false } : { src: p?.data.cover, width: 1600, height: 1000, sample: !!p?.data.sample };
+};
+const SAMPLE_NOTE = '示例图片 · 项目资料待补充';
+const SAMPLE_NOTE_EN = 'Sample image · project details coming soon';
+// 首屏图：优先用 site.heroImage，否则用第一个项目的封面
+const heroImg = site.heroImage ?? (projects[0] && {
+  src: projects[0].data.cover, alt: projects[0].data.coverAlt, altEn: projects[0].data.coverAltEn, width: 1600, height: 1000, sample: projects[0].data.sample,
+});
+
+const fmtDate = (d: Date) =>
+  `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`;
+const pad = (n: number) => String(n).padStart(2, '0');
+
+const skills = site.skillGroups.flatMap((g) => g.items);
+
+const resumeCols = [
+  { title: '技能方向', titleEn: 'Skills', items: skills, pending: '具体技能待补充', pendingEn: 'Skills coming soon' },
+  { title: '关键经历', titleEn: 'Experience', items: site.experience, pending: '任职与项目经历待补充', pendingEn: 'Work and project experience coming soon' },
+  { title: '教育背景', titleEn: 'Education', items: site.education, pending: '教育信息待补充', pendingEn: 'Education details coming soon' },
+];
+
+const { contact } = site;
+// 每组一个标题，下面一到多条账号；text 为空时显示“待补充”，href 为空时只显示文字
+type Account = { icon?: IconName; name?: string; href?: string | null; text: string | null };
+const bare = (url: string | null) => url?.replace(/^https?:\/\//, '') ?? null;
+const contactRows: { label: string; labelEn: string; icon?: IconName; items: Account[] }[] = [
+  { label: '邮箱', labelEn: 'Email', icon: 'mail', items: [{ href: contact.email && `mailto:${contact.email}`, text: contact.email }] },
+  { label: 'GitHub', labelEn: 'GitHub', icon: 'github', items: [{ href: contact.github, text: bare(contact.github) }] },
+  {
+    label: '其他账号',
+    labelEn: 'Other accounts',
+    items: [
+      { icon: 'qq', name: 'QQ', text: contact.qq },
+      { icon: 'x', name: 'X', href: contact.x, text: bare(contact.x) },
+      ...contact.others.map((o) => ({ name: o.label, href: o.url, text: bare(o.url) })),
+    ],
+  },
+];
+---
+<Base
+  title={`${site.name} · ${site.role}`}
+  description="ice 的个人网站：项目、简历、我的思考与联系方式。"
+  titleEn={`${site.name} · ${site.roleEn}`}
+  descriptionEn="ice's personal website: projects, resume, thoughts and contact."
+  home
+>
+  <!-- 开场三屏：宽屏时固定在视口内，首屏画面旋转收缩成菱形，再由左右两张图盖上 -->
+  <div class="intro" id="top">
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="hero__media">
+        {site.heroVideo ? (
+          <video class="hero__photo" src={site.heroVideo.src} poster={site.heroVideo.poster} muted loop playsinline preload="auto" aria-hidden="true"></video>
+        ) : heroImg && (
+          <img class="hero__photo" src={heroImg.src} width={heroImg.width} height={heroImg.height} alt={heroImg.alt} {...en(null, { alt: heroImg.altEn })} fetchpriority="high">
+        )}
+      </div>
+      <div class="loader" aria-hidden="true"></div>
+      <svg class="hero__mark" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <path d="M32 3 61 32 32 61 3 32Z" />
+        <path d="M32 17 47 32 32 47 17 32Z" />
+      </svg>
+      <div class="hero__inner frame">
+        <p class="hero__labels t-small">
+          {heroImg && 'sample' in heroImg && heroImg.sample
+            ? <span {...en(SAMPLE_NOTE_EN)}>{SAMPLE_NOTE}</span>
+            : <span>Portfolio</span>}
+          <span {...en('AI Full Stack · Personal site')}>AI 全栈 · 个人网站</span>
+        </p>
+        <h1 class="visually-hidden" id="hero-title" {...en(`${site.name} · ${site.roleEn}`)}>{site.name} · {site.role}</h1>
+        <p class="hero__title t-hero" aria-hidden="true">
+          <span class="hero__row"><span>{site.name}</span><span>AI</span></span>
+          <span class="hero__row"><span>Full</span><span>Stack</span></span>
+        </p>
+      </div>
+    </section>
+
+    <section class="about" aria-labelledby="about-title">
+      <h2 class="visually-hidden" id="about-title" {...en(`About ${site.name}`)}>关于 {site.name}</h2>
+      <div class="frame">
+        <div class="about__row">
+          <div class="about__col about__col--1">
+            <p class="about__labels t-small"><span {...en('Intro')}>简介</span><span>01</span></p>
+            <p class="about__title t-heading">{site.name}</p>
+            {site.intro
+              ? <p class="about__text t-small" {...en(site.introEn)}>{site.intro}</p>
+              : <p class="about__text t-small pending" {...en('Intro coming soon')}>正式简介待补充</p>}
+          </div>
+          <div class="about__diamond" aria-hidden="true">
+            {heroImg && <img class="about__photo" src={heroImg.src} width={heroImg.width} height={heroImg.height} loading="lazy" alt="">}
+          </div>
+          <div class="about__col about__col--2">
+            <p class="about__labels t-small"><span {...en('Focus')}>方向</span><span>02</span></p>
+            <p class="about__title t-heading" {...en(site.roleEn)}>{site.role}</p>
+            {skills.length
+              ? <p class="about__text t-small">{skills.join(' / ')}</p>
+              : <p class="about__text t-small pending" {...en('Skills coming soon')}>具体技能待补充</p>}
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="statement" aria-labelledby="statement-title">
+      <h2 class="visually-hidden" id="statement-title" {...en('Projects and thoughts')}>项目与思考</h2>
+      <div class="statement__photos">
+        <div class="statement__half">
+          <img class="statement__photo" src={statementImg(0).src} width={statementImg(0).width} height={statementImg(0).height} loading="lazy" alt="">
+          <div class="statement__cta">
+            {statementImg(0).sample && <span class="t-small" {...en('Sample image')}>示例图片</span>}
+            <a class="btn btn--cream" href="#projects" data-label="查看项目" {...en('View projects', { 'data-label': 'View projects' })}>查看项目</a>
+          </div>
+        </div>
+        <div class="statement__half">
+          <img class="statement__photo" src={statementImg(1).src} width={statementImg(1).width} height={statementImg(1).height} loading="lazy" alt="">
+          <div class="statement__cta">
+            {statementImg(1).sample && <span class="t-small" {...en('Sample image')}>示例图片</span>}
+            <a class="btn btn--cream" href="#thoughts" data-label="我的思考" {...en('My thoughts', { 'data-label': 'My thoughts' })}>我的思考</a>
+          </div>
+        </div>
+      </div>
+      <div class="statement__inner frame" aria-hidden="true">
+        <p class="statement__title t-heading">
+          <span class="statement__row">
+            <span class="statement__group"><span class="mask"><span>Selected</span></span></span>
+            <span class="statement__group"><span class="t-small" {...en('Selected')}>精选项目</span><span class="mask"><span>Projects</span></span></span>
+          </span>
+          <span class="statement__row">
+            <span class="statement__group"><span class="mask"><span>And</span></span></span>
+            <span class="statement__group"><span class="t-small" {...en('Notes')}>我的思考</span><span class="mask"><span>Thoughts</span></span></span>
+          </span>
+        </p>
+      </div>
+    </section>
+  </div>
+
+  <!-- 简历摘要 -->
+  <section class="resume" id="resume" aria-labelledby="resume-title">
+    <div class="resume__inner frame">
+      <div class="resume__top">
+        <h2 class="visually-hidden" id="resume-title" {...en('Resume summary')}>简历摘要</h2>
+        <p class="resume__title t-heading-xl" aria-hidden="true" data-rise>
+          <span class="mask"><span>AI</span></span>
+          <span class="mask"><span>Full</span></span>
+          <span class="mask"><span>Stack</span></span>
+        </p>
+        <p class="resume__lead t-small" data-reveal {...en(site.intro ? site.introEn : 'Resume summary: skills, key experience and education. Details are being put together and will appear here once confirmed.')}>
+          {site.intro ?? '简历摘要：技能方向、关键经历与教育背景。具体内容整理中，确认后会更新在这里。'}
+        </p>
+      </div>
+      <ul class="resume__list">
+        {resumeCols.map((c, i) => (
+          <li class="resume__item" data-reveal>
+            <div class="resume__head">
+              <h3 class="t-title" {...en(c.titleEn)}>{c.title}</h3>
+              <span class="t-small">{pad(i + 1)}</span>
+            </div>
+            {c.items.length
+              ? <ul class="resume__text t-small">{c.items.map((it) => <li>{it}</li>)}</ul>
+              : <p class="resume__text t-small pending" {...en(c.pendingEn)}>{c.pending}</p>}
+          </li>
+        ))}
+      </ul>
+    </div>
+  </section>
+
+  <!-- 技能：按组列出，每项大字逐个升起；某组为空时显示“待补充” -->
+  <section class="skills" id="skills" aria-labelledby="skills-title">
+    <div class="skills__inner frame">
+      <div class="skills__top">
+        <h2 class="t-small" id="skills-title" {...en('Skills')}>技能</h2>
+        <p class="skills__title t-heading-xl" aria-hidden="true" data-rise>
+          <span class="mask"><span>Skill</span></span>
+          <span class="mask"><span>Set</span></span>
+        </p>
+      </div>
+      <div class="skills__groups">
+        {site.skillGroups.map((g, i) => (
+          <div class="skills__group">
+            <div class="skills__head t-small">
+              <h3 {...en(g.titleEn)}>{g.title}</h3>
+              <span>{pad(i + 1)}</span>
+            </div>
+            {g.items.length
+              ? <ul class="skills__list t-heading-md" data-rise>{g.items.map((it) => <li><span class="mask"><span>{it}</span></span></li>)}</ul>
+              : <p class="t-small pending" data-reveal {...en('Coming soon')}>待补充</p>}
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- 精选项目：悬停或选中名称即切换满屏大图 -->
+  <section class="works" id="projects" aria-labelledby="projects-title">
+    <div class="works__photos">
+      {projects.map((p, i) => (
+        <img
+          class:list={['works__photo', { 'is-active': i === 0 }]}
+          data-work={p.id}
+          src={p.data.cover}
+          width="1600" height="1000"
+          loading="lazy"
+          alt={p.data.coverAlt}
+          {...en(null, { alt: p.data.coverAltEn })}
+        />
+      ))}
+    </div>
+    <div class="works__inner frame">
+      <div class="works__head">
+        <ul class="works__list" aria-label="选择项目" {...en(null, { 'aria-label': 'Choose a project' })}>
+          {projects.map((p, i) => (
+            <li>
+              <button type="button" class="works__item t-heading-md" data-work={p.id} aria-pressed={i === 0 ? 'true' : 'false'}>
+                {i === 0 && <span class="works__mark" aria-hidden="true"></span>}
+                <span class="works__label" {...en(p.data.titleEn)}>{p.data.title}</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+        {hasSample && <p class="t-small" {...en(SAMPLE_NOTE_EN)}>{SAMPLE_NOTE}</p>}
+      </div>
+      <h2 class="visually-hidden" id="projects-title" {...en('Selected projects')}>精选项目</h2>
+      <p class="works__title" aria-hidden="true" data-rise>
+        <span class="works__group">
+          <span class="mask t-display"><span>Selected</span></span>
+          <span class="works__tag t-small" {...en('Selected')}>精选项目</span>
+        </span>
+        <span class="works__group works__group--end">
+          <span class="mask t-display"><span>Works</span></span>
+          <span class="works__tag t-small">({pad(projects.length)})</span>
+        </span>
+      </p>
+    </div>
+  </section>
+
+  <!-- 我的思考：有文章时列出最近 3 篇 -->
+  <section class="thoughts" id="thoughts" aria-labelledby="thoughts-title">
+    <div class="thoughts__inner frame">
+      <div class="thoughts__top">
+        <h2 class="t-small" id="thoughts-title" {...en('My thoughts')}>我的思考</h2>
+        <div class="thoughts__body">
+          {thoughts.length ? (
+            <ol class="thoughts__list">
+              {thoughts.map((t) => (
+                <li data-reveal>
+                  <a href={t.data.url ?? `/thoughts/${t.id}/`} {...(t.data.url ? { rel: 'noopener', target: '_blank' } : {})}>
+                    <time class="t-small" datetime={t.data.date.toISOString()}>{fmtDate(t.data.date)}</time>
+                    <span class="t-quote" {...en(t.data.titleEn)}>{t.data.title}</span>
+                    {t.data.summary && <span class="thoughts__summary t-small" {...en(t.data.summaryEn)}>{t.data.summary}</span>}
+                  </a>
+                </li>
+              ))}
+            </ol>
+          ) : (
+            <p class="t-quote" data-reveal {...en('Articles are on the way. Published pieces will appear here.')}>文章整理中。已发表的文章会陆续放在这里。</p>
+          )}
+        </div>
+      </div>
+      <p class="thoughts__band t-giant" aria-hidden="true">
+        <span class="thoughts__word"><span class="thoughts__ink">Think</span></span>
+        {site.thoughtsImage
+          ? <img class="thoughts__photo" src={site.thoughtsImage.src} width={site.thoughtsImage.width} height={site.thoughtsImage.height} loading="lazy" alt="">
+          : projects[0] && <img class="thoughts__photo" src={cover(2)} width="1600" height="1000" loading="lazy" alt="">}
+        <span class="thoughts__word thoughts__word--end"><span class="thoughts__ink">Notes</span></span>
+      </p>
+    </div>
+  </section>
+
+  <!-- 联系 + 页脚 -->
+  <div class="closing" id="contact">
+    {heroImg && <img class="closing__photo" src={heroImg.src} width={heroImg.width} height={heroImg.height} loading="lazy" alt="">}
+    <div class="closing__inner frame">
+      <section class="contact" aria-labelledby="contact-title">
+        <h2 class="visually-hidden" id="contact-title" {...en('Contact')}>联系</h2>
+        <p class="contact__title t-heading" aria-hidden="true" data-rise>
+          <span class="contact__row">
+            <span class="contact__group"><span class="mask"><span>Get in</span></span><span class="t-small" {...en('Say hi')}>联系</span></span>
+            <span class="contact__group"><span class="mask"><span>Touch</span></span><span class="t-small">Contact</span></span>
+          </span>
+          <span class="contact__row contact__row--center"><span class="mask"><span>With {site.name}</span></span></span>
+        </p>
+        <div class="contact__panel" data-reveal>
+          <dl class="contact__list">
+            {contactRows.map((row) => (
+              <div class="contact__field">
+                <dt class="contact__label t-title">{row.icon && <Icon name={row.icon} />}<span {...en(row.labelEn)}>{row.label}</span></dt>
+                {row.items.map((it) => (
+                  <dd class="contact__account t-small">
+                    {it.icon && <Icon name={it.icon} />}
+                    {it.name && <span class="contact__name">{it.name}</span>}
+                    {!it.text
+                      ? <span class="pending" {...en('Coming soon')}>待补充</span>
+                      : it.href ? <a href={it.href}>{it.text}</a> : <span>{it.text}</span>}
+                  </dd>
+                ))}
+              </div>
+            ))}
+          </dl>
+          {contact.email && <a class="btn btn--cream btn--full" href={`mailto:${contact.email}`} data-label="发送邮件" {...en('Send email', { 'data-label': 'Send email' })}>发送邮件</a>}
+        </div>
+      </section>
+
+      <footer class="footer">
+        <nav class="footer__nav t-small" aria-label="页脚导航" {...en(null, { 'aria-label': 'Footer' })}>
+          <a class="nav-link" href="#top" {...en('Home')}>首页</a>
+          <a class="nav-link" href="#resume" {...en('Resume')}>简历</a>
+          <a class="nav-link" href="#skills" {...en('Skills')}>技能</a>
+          <a class="nav-link" href="#projects" {...en('Projects')}>项目</a>
+          <a class="nav-link" href="#thoughts" {...en('Thoughts')}>思考</a>
+          <a class="nav-link" href="#contact" {...en('Contact')}>联系</a>
+        </nav>
+        <p class="footer__wordmark t-wordmark" aria-hidden="true">
+          {[...site.name].map((ch) => <span class="mask"><span>{ch}</span></span>)}
+        </p>
+        <p class="footer__copy t-small">© {new Date().getFullYear()} {site.name}</p>
+      </footer>
+    </div>
+  </div>
+</Base>
+
+<script>
+  import { initHome } from '../scripts/home';
+  initHome();
+</script>
